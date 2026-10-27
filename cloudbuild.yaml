@@ -1,4 +1,4 @@
-eps:
+steps:
   # Step 1: Upload your Airflow DAG to Cloud Composer
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     entrypoint: 'gcloud'
