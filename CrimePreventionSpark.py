@@ -139,10 +139,10 @@ print('final df join with Branch df')
 final_df = final_df.join(branch_df,on = 'branch_code', how = 'left')
 display(final_df.limit(5).toPandas())
 
-#write cleansed parquet
-#print('parquet file written')
-#final_df.write.mode('overwrite')\
-#.parquet('gs://keystone_26/cleansed/final_transactions')
+write cleansed parquet
+print('parquet file written')
+final_df.write.mode('overwrite')\
+.parquet('gs://keystone_26/cleansed/final_transactions')
 
 print('Reading Parqeut file')
 parquet_df =  spark.read\
