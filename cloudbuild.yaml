@@ -1,22 +1,15 @@
-steps:
-  # Step 1: Install Python dependencies
-  - name: 'python'
-    entrypoint: pip
-    args: ["install", "-r", "utils/requirements.txt", "--user"]
-
-  # Step 2: Run the script to upload DAGs and Data to Composer bucket
-  - name: 'python'
-    entrypoint: python
+eps:
+  # Step 1: Upload your Airflow DAG to Cloud Composer
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: 'gcloud'
     args:
-      - "utils/add_dags_to_composer.py"
-      - "--dags_directory=${_DAGS_DIRECTORY}"
-      - "--dags_bucket=${_DAGS_BUCKET}"
-      - "--data_directory=${_DATA_DIRECTORY}"
+      - 'storage'
+      - 'cp'
+      - 'spark_dag.py'
+      - 'gs://${_DAGS_BUCKET}/dags/spark_dag.py'
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _DAGS_DIRECTORY: "workflows/"
-  _DAGS_BUCKET: "us-central1-bankingproj-3b235843-bucket" # Replace with your Composer bucket
-  _DATA_DIRECTORY: "data/"
+  _DAGS_BUCKET: "us-central1-bankcrimeflow-c57f7f77-bucket"
