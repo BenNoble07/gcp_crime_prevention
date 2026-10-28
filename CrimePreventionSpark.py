@@ -11,7 +11,7 @@ spark = SparkSession.builder \
 print('Spark Session Created Successfully')
 
 #CONFIG
-PROJECT_ID = 'KeystoneProject'
+PROJECT_ID = 'project-e7d60bb2-e6b7-41d1-b28'
 DATASET = 'BankingCrimeFlow'
 BUCKET = 'keystone_26'
 
@@ -71,7 +71,7 @@ clean_amount_df.show(5)
 
 print('Changing amount column to numeric')
 clean_df = clean_amount_df.withColumn('amount',F.col('amount').cast('double'))
-clean_amount_df.show(5)
+clean_df.show(5)
 
 print('Postive values only')
 clean_df = clean_df.withColumn('amount_gbp',F.abs(F.col('amount')))
@@ -84,7 +84,15 @@ clean_df.show(5)
 clean_df.filter(F.col('is_refund')== 'TRUE').show()
 
 print('Currency unit GBP Standardised and filled for Null rows')
-clean_df = clean_df.withColumn('currency_unit',F.when(F.trim(F.upper(F.col('currency_unit'))) != 'GBP', 'GBP').otherwise(F.trim(F.upper(F.col('currency_unit')))))
+clean_df = clean_df.withColumn(
+    'currency_unit',
+    F.when(
+        F.col('currency_unit').isNull() |
+        (F.trim(F.col('currency_unit')) == '') |
+        (F.trim(F.upper(F.col('currency_unit'))) != 'GBP'),
+        'GBP'
+    ).otherwise(F.trim(F.upper(F.col('currency_unit'))))
+)
 clean_df.show(5)
 
 print('Channel column Values Changed to Capital')
@@ -115,7 +123,7 @@ final_df.show()
 
 print('add is_pep_transaction')
 final_df = final_df.withColumn('is_pep_transaction',F.when(F.col('pep_flag')==True,True).otherwise(False))
-display(final_df.limit(5).toPandas())
+
 
 #Window Function
 print('Total Transaction count shown')
@@ -126,20 +134,21 @@ final_df.show(5)
 print('Total Amount shown')
 final_df = final_df.withColumn('total_amount',F.round(F.sum(F.col('amount')).over(cust_window),2))
 final_df.show(5)
-display(final_df.limit(5).toPandas())
+
+
 
 print('velocity_band shown')
 final_df = final_df.withColumn('velocity_band',F.when(
                                                        (F.col('trascn_count')>10) |
                                                        (F.col('total_amount')>50000),'High').otherwise('Low'))
-display(final_df.limit(10).toPandas())
+
 
 print('final df join with Branch df')
 #Branch lookup join Df
 final_df = final_df.join(branch_df,on = 'branch_code', how = 'left')
-display(final_df.limit(5).toPandas())
 
-write cleansed parquet
+
+#write cleansed parquet
 print('parquet file written')
 final_df.write.mode('overwrite')\
 .parquet('gs://keystone_26/cleansed/final_transactions')
@@ -147,7 +156,6 @@ final_df.write.mode('overwrite')\
 print('Reading Parqeut file')
 parquet_df =  spark.read\
 .parquet('gs://keystone_26/cleansed/final_transactions')
-display(parquet_df.limit(5).toPandas())
 
 print('Reading count')
 record_count = parquet_df.count()
@@ -155,11 +163,11 @@ print(f'Total records :{record_count}')
 
 count_df = spark.createDataFrame([(record_count,)],['record_count'])
 
-count_df.write.mode(overwrite)\
-                  .option(header,'True')\
-                  .csv(f":gs://keystone_26/audit/")
-cnt_df = spark.read.mode\
-                  .option(header,'True')\
-                  .option(inferschema,'True')\
-                  .csv(f":gs://keystone_26/audit/")
-cnt_df.show()
+count_df.write.mode('overwrite')\
+                  .option('header','True')\
+                  .csv(f"gs://keystone_26/audit/")
+cnt_df = spark.read\
+                  .option('header','True')\
+                  .option('inferschema','True')\
+                  .csv(f"gs://keystone_26/audit/")
+

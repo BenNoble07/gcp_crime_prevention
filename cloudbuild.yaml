@@ -8,6 +8,15 @@ steps:
       - 'spark_dag.py'
       - 'gs://${_DAGS_BUCKET}/dags/spark_dag.py'
 
+  # Step 2: Upload PySpark Scripts to GCS 
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    entrypoint: 'gcloud'
+    args:
+      - 'storage'
+      - 'cp'
+      - 'CrimePreventionSpark.py'
+      - 'gs://keystone_26/scripts/CrimePreventionSpark.py'
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
